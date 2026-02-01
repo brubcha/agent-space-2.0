@@ -1,0 +1,9 @@
+{
+  "success": false,
+  "error": "Website extraction error: No meaningful structured content extracted, but all visible text is included for manual review.",
+  "output": {},
+  "metadata": {},
+  "errors": [
+    "Website extraction error: No meaningful structured content extracted, but all visible text is included for manual review."
+  ]
+}

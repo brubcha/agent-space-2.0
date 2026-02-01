@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Request #{{ request[0] }} - AgentSpace{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 30px;">Request #{{ request[0] }}</h1>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px;">
+        <div>
+            <h2>{{ request[2] }}</h2>
+            <p style="color: #666; margin-top: 5px;">{{ request[1] }}</p>
+        </div>
+        <span class="status {{ request[7] }}">{{ request[7] }}</span>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <div>
+            <strong>Website:</strong> 
+            {% if request[3] %}
+                <a href="{{ request[3] }}" target="_blank">{{ request[3] }}</a>
+            {% else %}
+                <span style="color: #999;">Not provided</span>
+            {% endif %}
+        </div>
+        <div><strong>Created:</strong> {{ request[10] }}</div>
+        <div><strong>Completed:</strong> {{ request[11] if request[11] else 'In progress...' }}</div>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <strong>Offerings:</strong>
+        <p style="margin-top: 5px;">{{ request[4] if request[4] else 'Not provided' }}</p>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <strong>Competitors:</strong>
+        <p style="margin-top: 5px;">{{ request[5] if request[5] else 'Not provided' }}</p>
+    </div>
+    
+    {% if request[6] %}
+    <div style="margin-bottom: 20px;">
+        <strong>Additional Information:</strong>
+        <p style="margin-top: 5px;">{{ request[6] }}</p>
+    </div>
+    {% endif %}
+    
+    {% if files %}
+    <div style="margin-bottom: 30px;">
+        <strong>Uploaded Files:</strong>
+        <div style="margin-top: 10px;">
+            {% for file in files %}
+            <div class="file-item">
+                <span>📄 {{ file[0] }}</span>
+                <span style="color: #999; font-size: 12px;">{{ file[2] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if request[7] == 'completed' %}
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+        <h3 style="margin-bottom: 15px;">📥 Download Generated Files</h3>
+        <div style="display: flex; gap: 15px;">
+            <a href="{{ url_for('download_file', request_id=request[0], file_type='docx') }}" class="btn">
+                📄 Download DOCX
+            </a>
+            <a href="{{ url_for('download_file', request_id=request[0], file_type='json') }}" class="btn btn-secondary">
+                📊 Download JSON
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+{% endblock %}

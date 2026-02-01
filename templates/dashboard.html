@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - AgentSpace{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 30px;">Welcome, {{ user.username }}!</h1>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Your Requests</h2>
+        <a href="{{ url_for('new_request') }}" class="btn">+ New Request</a>
+    </div>
+    
+    {% if requests %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Client</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in requests %}
+            <tr>
+                <td>#{{ req[0] }}</td>
+                <td>{{ req[1] }}</td>
+                <td>{{ req[2] }}</td>
+                <td><span class="status {{ req[3] }}">{{ req[3] }}</span></td>
+                <td>{{ req[4] }}</td>
+                <td><a href="{{ url_for('view_request', request_id=req[0]) }}">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; padding: 40px; color: #999;">
+        No requests yet. <a href="{{ url_for('new_request') }}">Create your first one!</a>
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

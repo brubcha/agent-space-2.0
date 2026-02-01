@@ -1,0 +1,9 @@
+{
+  "success": false,
+  "error": "Website extraction error: No meaningful content extracted from website, even with Selenium. The site may be mostly images, JavaScript, or lacks recognizable sections.",
+  "output": {},
+  "metadata": {},
+  "errors": [
+    "Website extraction error: No meaningful content extracted from website, even with Selenium. The site may be mostly images, JavaScript, or lacks recognizable sections."
+  ]
+}
