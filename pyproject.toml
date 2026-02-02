@@ -1,0 +1,12 @@
+[project]
+name = "agent-space-2.0"
+version = "0.1.0"
+description = "AI-powered marketing kit generator using Agent Builder."
+authors = ["Your Name <your.email@example.com>"]
+dependencies = [
+    "agent-builder"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
