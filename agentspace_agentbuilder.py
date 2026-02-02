@@ -29,13 +29,13 @@ def engagement_framework_builder(inputs):
     return generate_engagement_framework(inputs)
 
 # Main AgentBuilder workflow
-def main():
-    inputs = get_example_inputs()  # Replace with your actual input source
+
+def generate_marketing_kit(inputs):
     try:
         questionnaire = BrandQuestionnaire(**inputs)
     except Exception as e:
         print(f"Input validation failed: {e}")
-        return
+        return None
 
     builder = AgentBuilder(name="MarketingKitAgent")
     builder.set_objective("Generate a complete marketing kit for a brand.")
@@ -52,11 +52,18 @@ def main():
     builder.set_coordinator(workflow="sequential")
     agent = builder.build()
     result = agent.run(inputs=inputs)
+    return result
 
-    output_filename = f"marketing_kit_{questionnaire.company_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    with open(output_filename, "w", encoding="utf-8") as f:
-        json.dump(result.output, f, ensure_ascii=False, indent=2)
-    print(f"Marketing kit saved to {output_filename}")
+# For CLI usage, keep main()
+def main():
+    inputs = get_example_inputs()  # Replace with your actual input source
+    result = generate_marketing_kit(inputs)
+    if result:
+        questionnaire = BrandQuestionnaire(**inputs)
+        output_filename = f"marketing_kit_{questionnaire.company_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(output_filename, "w", encoding="utf-8") as f:
+            json.dump(result.output, f, ensure_ascii=False, indent=2)
+        print(f"Marketing kit saved to {output_filename}")
 
 if __name__ == "__main__":
     main()
