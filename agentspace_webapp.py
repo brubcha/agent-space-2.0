@@ -287,14 +287,16 @@ def new_request():
         offerings = request.form.get('offerings', '')
         competitors = request.form.get('competitors', '')
         additional_info = request.form.get('additional_info', '')
+        design_style = request.form.get('design_style', 'ai_powered')
+        language_style = request.form.get('language_style', 'swift_innovation')
         
         # Create request in database
         conn = sqlite3.connect('agentspace.db')
         c = conn.cursor()
         c.execute('''
-            INSERT INTO requests (user_id, request_type, client_name, website, offerings, competitors, additional_info, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'processing')
-        ''', (current_user.id, request_type, client_name, website, offerings, competitors, additional_info))
+            INSERT INTO requests (user_id, request_type, client_name, website, offerings, competitors, additional_info, status, design_style, language_style)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'processing', ?, ?)
+        ''', (current_user.id, request_type, client_name, website, offerings, competitors, additional_info, design_style, language_style))
         request_id = c.lastrowid
         conn.commit()
         
@@ -333,12 +335,12 @@ def new_request():
                 offerings=offerings,
                 competitors=competitors,
                 additional_info=additional_info,
-                uploaded_files=uploaded_files
+                uploaded_files=uploaded_files,
+                design_style=design_style,
+                language_style=language_style
             )
-            
             flash('Marketing kit generated successfully!', 'success')
             return redirect(url_for('view_request', request_id=request_id))
-        
         except Exception as e:
             flash(f'Error generating marketing kit: {str(e)}', 'error')
             # Update status to failed
@@ -454,7 +456,7 @@ def admin_dashboard():
 
 
 
-def process_marketing_kit_request(request_id, client_name, website, offerings, competitors, additional_info, uploaded_files):
+def process_marketing_kit_request(request_id, client_name, website, offerings, competitors, additional_info, uploaded_files, design_style="ai_powered", language_style="swift_innovation"):
     """
     FIXED version that handles validation properly.
     """
@@ -469,6 +471,8 @@ def process_marketing_kit_request(request_id, client_name, website, offerings, c
     # Step 1: Prepare minimal form data
     form_data = {
         "company_name": client_name,
+        "design_style": design_style,
+        "language_style": language_style,
     }
     # Add optional fields only if provided
     if website:
@@ -490,6 +494,30 @@ def process_marketing_kit_request(request_id, client_name, website, offerings, c
 
     # Step 3: Prepare with defaults to ensure validation passes
     validated_inputs = prepare_inputs_with_defaults(enriched_profile)
+
+    # Step 4: Get design and language style objects
+    # DESIGN SYSTEM
+    if design_style == "ai_powered":
+        from agentspace_design_agent import get_design_for_company
+        design_system = get_design_for_company(validated_inputs)
+    elif design_style == "custom":
+        from agentspace_design_styles import create_custom_design_system
+        # For demo, use a hardcoded custom config; in production, collect more fields from user
+        design_system = create_custom_design_system(
+            name="Custom",
+            color_palette="swift_innovation",
+            typography="swift_modern",
+            layout="standard",
+            description="User custom mix"
+        )
+    else:
+        from agentspace_design_styles import get_design_system
+        design_system = get_design_system(design_style)
+
+    # LANGUAGE STYLE
+    from agentspace_language_styles import get_language_style, get_language_style_instructions
+    language_style_obj = get_language_style(language_style)
+    language_instructions = get_language_style_instructions(language_style_obj)
 
     # Only fail if both structured and fallback content are missing
     if 'error' in enriched_profile and not enriched_profile.get('company_overview'):
@@ -542,8 +570,10 @@ def process_marketing_kit_request(request_id, client_name, website, offerings, c
     if 'error' in validated_inputs:
         validated_inputs.pop('error', None)
 
-    # Step 4: Generate marketing kit with enriched data
+    # Step 5: Generate marketing kit with enriched data and style controls
     from agentspace_main_AI import run_marketing_kit_generation_AI
+    # Inject language style instructions into each section prompt
+    validated_inputs["language_instructions"] = language_instructions
     result = run_marketing_kit_generation_AI(validated_inputs, output_format="json", provider="claude")
 
     if result and result.success:
@@ -575,7 +605,8 @@ def process_marketing_kit_request(request_id, client_name, website, offerings, c
         docx_path = generate_marketing_kit_docx(
             company_name=client_name,
             agent_results=result.output,
-            output_dir=app.config['OUTPUT_FOLDER']
+            output_dir=app.config['OUTPUT_FOLDER'],
+            design_system=design_system
         )
 
         # Update database

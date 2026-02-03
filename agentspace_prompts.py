@@ -124,9 +124,25 @@ Your writing must match this exact style:
 • Include statistics/market data when relevant
 • Use concrete examples, never generic platitudes
 
+SENTENCE LENGTH — most important formatting rule:
+• Every sentence must be 20 words or fewer.
+• One idea per sentence. Split anything longer.
+• Short sentences create confident, scannable copy.
+
+SUB-HEADING STRUCTURE:
+• Every sub-topic must start with its own heading line.
+• Write headings as: **Heading Text** (bold, on its own line, nothing else on that line)
+• Minimum 3 sub-headings per section. More is better.
+• Do NOT bury headings inside a paragraph.
+
+PLACEHOLDER RULE:
+• NEVER write "To be defined", "To be determined", "To be researched",
+  or any other placeholder.
+• If you lack real data for a field, write a realistic example or omit the line.
+
 Quality bar:
 • Write at the level of a $2,000 professional deliverable
-• Each section must have substance and specificity
+• Each section must have substance and specificity — minimum 150 words
 • Match the depth and sophistication of Swift Innovation
 • Use the "Momentum through clarity" voice"""
 
@@ -765,10 +781,21 @@ def get_prompt_for_section_swift_complete(section_name: str, data: Dict[str, Any
         "engagement_framework_builder": get_engagement_framework_prompt,
     }
     
+    # Checklist appended to every user prompt automatically.
+    # Forces the LLM to self-check before emitting.
+    SECTION_FOOTER = """
+BEFORE YOU OUTPUT — check every item:
+• Every sentence 20 words or fewer? If not, split it.
+• At least 3 sub-headings, each on its own line as **Sub-Heading**? If not, add them.
+• Zero placeholders ("To be defined", etc.)? If not, replace or remove.
+• At least 150 words of specific content? If not, expand.
+"""
+
     prompt_func = prompt_map.get(section_name)
     
     if prompt_func:
-        return prompt_func(data)
+        system, prompt = prompt_func(data)
+        return system, prompt + SECTION_FOOTER
     else:
         # Fallback with Swift style system
         return SWIFT_STYLE_SYSTEM, f"""Generate {section_name.replace('_', ' ')} content matching Swift Innovation quality and style.

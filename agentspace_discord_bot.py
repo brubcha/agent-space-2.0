@@ -232,30 +232,25 @@ async def new_request(
         register_discord_user(str(interaction.user.id), interaction.user.name)
 
         # Create request in database with status 'pending'
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('''
-            INSERT INTO discord_requests 
-            (discord_id, guild_id, channel_id, request_type, client_name, website, offerings, competitors, additional_info, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-        ''', (
-            str(interaction.user.id),
-            str(interaction.guild_id) if interaction.guild else None,
-            str(interaction.channel_id),
-            request_type,
-            client_name,
-            website,
-            offerings,
-            competitors,
-            additional_info
-        ))
-        request_id = c.lastrowid
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        await interaction.followup.send(f"❌ Error creating request: {e}")
-        return
-
+        with sqlite3.connect(DB_PATH) as conn:
+            c = conn.cursor()
+            c.execute('''
+                INSERT INTO discord_requests 
+                (discord_id, guild_id, channel_id, request_type, client_name, website, offerings, competitors, additional_info, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+            ''', (
+                str(interaction.user.id),
+                str(interaction.guild_id) if interaction.guild else None,
+                str(interaction.channel_id),
+                request_type,
+                client_name,
+                website,
+                offerings,
+                competitors,
+                additional_info
+            ))
+            request_id = c.lastrowid
+            conn.commit()
     except Exception as e:
         await interaction.followup.send(f"❌ Error creating request: {e}")
         return
@@ -358,15 +353,14 @@ async def download(interaction: discord.Interaction, request_id: int):
     """Download a completed marketing kit."""
     import os
     import traceback
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
-        SELECT status, docx_output_path, client_name
-        FROM discord_requests
-        WHERE id = ? AND discord_id = ?
-    ''', (request_id, str(interaction.user.id)))
-    result = c.fetchone()
-    conn.close()
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute('''
+            SELECT status, docx_output_path, client_name
+            FROM discord_requests
+            WHERE id = ? AND discord_id = ?
+        ''', (request_id, str(interaction.user.id)))
+        result = c.fetchone()
     if not result:
         print(f"[ERROR] Download: No result for request_id={request_id}, user={interaction.user.id}")
         await interaction.response.send_message(
@@ -423,49 +417,40 @@ async def on_message(message):
     # Check for file attachments
     if message.attachments:
         # Check if user has a pending request
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('''
-            SELECT id FROM discord_requests
-            WHERE discord_id = ? AND status = 'pending'
-            ORDER BY created_at DESC
-            LIMIT 1
-        ''', (str(message.author.id),))
-        
-        pending = c.fetchone()
-        
-        if pending:
-            request_id = pending[0]
-            
-            # Save attachments
-            for attachment in message.attachments:
-                filename = attachment.filename
-                filepath = os.path.join(UPLOAD_FOLDER, f"{request_id}_{filename}")
-                
-                await attachment.save(filepath)
-                
-                sql = (
-                    """
-                    INSERT INTO discord_files (request_id, filename, filepath, file_type)
-                    VALUES (?, ?, ?, ?)
-                    """
+        with sqlite3.connect(DB_PATH) as conn:
+            c = conn.cursor()
+            c.execute('''
+                SELECT id FROM discord_requests
+                WHERE discord_id = ? AND status = 'pending'
+                ORDER BY created_at DESC
+                LIMIT 1
+            ''', (str(message.author.id),))
+            pending = c.fetchone()
+            if pending:
+                request_id = pending[0]
+                # Save attachments
+                for attachment in message.attachments:
+                    filename = attachment.filename
+                    filepath = os.path.join(UPLOAD_FOLDER, f"{request_id}_{filename}")
+                    await attachment.save(filepath)
+                    sql = (
+                        """
+                        INSERT INTO discord_files (request_id, filename, filepath, file_type)
+                        VALUES (?, ?, ?, ?)
+                        """
+                    )
+                    c.execute(sql, (request_id, filename, filepath, attachment.content_type))
+                conn.commit()
+                await message.add_reaction('✅')
+                await message.reply(
+                    f"✅ Files added to request #{request_id}!\n"
+                    f"Continue with the request or use `/submit-request {request_id}` when ready."
                 )
-                c.execute(sql, (request_id, filename, filepath, attachment.content_type))
-            
-            conn.commit()
-            conn.close()
-            
-            await message.add_reaction('✅')
-            await message.reply(
-                f"✅ Files added to request #{request_id}!\n"
-                f"Continue with the request or use `/submit-request {request_id}` when ready."
-            )
-        else:
-            await message.reply(
-                "💡 Create a request first using `/new-request`, then upload files!"
-            )
-        
-        return
+            else:
+                await message.reply(
+                    "💡 Create a request first using `/new-request`, then upload files!"
+                )
+            return
     
     # Process commands
     await bot.process_commands(message)
@@ -520,11 +505,10 @@ async def process_discord_request(request_id, client_name, website, offerings, c
                 return remove_surrogates_and_log(str(obj), log_path, path_stack)
 
     # 1. Gather uploaded files for this request
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('SELECT filepath FROM discord_files WHERE request_id = ?', (request_id,))
-    uploaded_files = [row[0] for row in c.fetchall()]
-    conn.close()
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute('SELECT filepath FROM discord_files WHERE request_id = ?', (request_id,))
+        uploaded_files = [row[0] for row in c.fetchall()]
 
     # 2. Build form_data dict (like webapp)
     form_data = {"company_name": client_name}
@@ -599,19 +583,18 @@ async def process_discord_request(request_id, client_name, website, offerings, c
             output_dir=OUTPUT_FOLDER
         )
         # Update DB
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('''
-            UPDATE discord_requests
-            SET status = 'completed',
-                json_output_path = ?,
-                docx_output_path = ?,
-                completed_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ''', (json_path, docx_path, request_id))
-        conn.commit()
-        conn.close()
-        return True
+        with sqlite3.connect(DB_PATH) as conn:
+            c = conn.cursor()
+            c.execute('''
+                UPDATE discord_requests
+                SET status = 'completed',
+                    json_output_path = ?,
+                    docx_output_path = ?,
+                    completed_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (json_path, docx_path, request_id))
+            conn.commit()
+            return True
     return False
 
 

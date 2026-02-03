@@ -1,108 +1,154 @@
-{% extends "base.html" %}
-{% block title %}New Request - AgentSpace{% endblock %}
-{% block content %}
-<h1 style="margin-bottom: 30px;">Create New Request</h1>
+{% extends "base.html" %} {% block title %}New Request - AgentSpace{% endblock
+%} {% block content %}
+<h1 style="margin-bottom: 30px">Create New Request</h1>
 
 <div class="card">
-    <form method="POST" enctype="multipart/form-data" id="requestForm">
-        <div class="form-group">
-            <label>Request Type</label>
-            <select name="request_type">
-                <option value="Marketing Kit">Marketing Kit</option>
-                <option value="Brand Strategy">Brand Strategy</option>
-                <option value="Content Calendar">Content Calendar</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label>Client Name *</label>
-            <input type="text" name="client_name" required placeholder="Acme Corp">
-        </div>
-        
-        <div class="form-group">
-            <label>Website</label>
-            <input type="url" name="website" placeholder="https://example.com">
-        </div>
-        
-        <div class="form-group">
-            <label>Offerings</label>
-            <textarea name="offerings" placeholder="List the client's products/services (one per line or comma-separated)"></textarea>
-        </div>
-        
-        <div class="form-group">
-            <label>Competitors</label>
-            <textarea name="competitors" placeholder="List main competitors (one per line or comma-separated)"></textarea>
-        </div>
-        
-        <div class="form-group">
-            <label>Additional Information</label>
-            <textarea name="additional_info" placeholder="Any other relevant information about the client, their industry, target audience, brand personality, etc."></textarea>
-        </div>
-        
-        <div class="form-group">
-            <label>Upload Files (Brand assets, documents, etc.)</label>
-            <div class="drop-zone" id="dropZone">
-                <p>📎 Drag and drop files here or click to browse</p>
-                <p style="color: #999; font-size: 14px; margin-top: 10px;">Supported: PDF, DOCX, Images, etc. (Max 50MB)</p>
-                <input type="file" name="files" id="fileInput" multiple style="display: none;">
-            </div>
-            <div class="file-list" id="fileList"></div>
-        </div>
-        
-        <div style="display: flex; gap: 15px;">
-            <button type="submit" class="btn">🚀 Generate Marketing Kit</button>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+  <form method="POST" enctype="multipart/form-data" id="requestForm">
+    <div class="form-group">
+      <label>Request Type</label>
+      <select name="request_type">
+        <option value="Marketing Kit">Marketing Kit</option>
+        <option value="Brand Strategy">Brand Strategy</option>
+        <option value="Content Calendar">Content Calendar</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Client Name *</label>
+      <input type="text" name="client_name" required placeholder="Acme Corp" />
+    </div>
+
+    <div class="form-group">
+      <label>Website</label>
+      <input type="url" name="website" placeholder="https://example.com" />
+    </div>
+
+    <div class="form-group">
+      <label>Offerings</label>
+      <textarea
+        name="offerings"
+        placeholder="List the client's products/services (one per line or comma-separated)"
+      ></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Competitors</label>
+      <textarea
+        name="competitors"
+        placeholder="List main competitors (one per line or comma-separated)"
+      ></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Additional Information</label>
+      <textarea
+        name="additional_info"
+        placeholder="Any other relevant information about the client, their industry, target audience, brand personality, etc."
+      ></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Upload Files (Brand assets, documents, etc.)</label>
+      <div class="drop-zone" id="dropZone">
+        <p>📎 Drag and drop files here or click to browse</p>
+        <p style="color: #999; font-size: 14px; margin-top: 10px">
+          Supported: PDF, DOCX, Images, etc. (Max 50MB)
+        </p>
+        <input
+          type="file"
+          name="files"
+          id="fileInput"
+          multiple
+          style="display: none"
+        />
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Visual Design Style</label>
+      <select name="design_style">
+        <option value="swift_innovation">
+          Swift Innovation (Modern, Professional)
+        </option>
+        <option value="healthcare_professional">Healthcare Professional</option>
+        <option value="tech_startup">Tech Startup</option>
+        <option value="finance_corporate">Finance & Corporate</option>
+        <option value="creative_agency">Creative Agency</option>
+        <option value="minimal_modern">Minimal Modern</option>
+        <option value="ai_powered">AI-Powered (Recommended)</option>
+        <option value="custom">Custom (Mix & Match)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Language Style</label>
+      <select name="language_style">
+        <option value="swift_innovation">
+          Swift Innovation (Confident, Modern)
+        </option>
+        <option value="professional_corporate">Professional Corporate</option>
+        <option value="tech_modern">Tech Modern</option>
+        <option value="creative_bold">Creative Bold</option>
+        <option value="consultative_expert">Consultative Expert</option>
+        <option value="accessible_friendly">Accessible Friendly</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 15px">
+      <button type="submit" class="btn">🚀 Generate Marketing Kit</button>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
 </div>
 
 <script>
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const fileList = document.getElementById('fileList');
+  const dropZone = document.getElementById("dropZone");
+  const fileInput = document.getElementById("fileInput");
+  const fileList = document.getElementById("fileList");
 
-dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener("click", () => fileInput.click());
 
-dropZone.addEventListener('dragover', (e) => {
+  dropZone.addEventListener("dragover", (e) => {
     e.preventDefault();
-    dropZone.classList.add('dragover');
-});
+    dropZone.classList.add("dragover");
+  });
 
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener("dragleave", () =>
+    dropZone.classList.remove("dragover"),
+  );
 
-dropZone.addEventListener('drop', (e) => {
+  dropZone.addEventListener("drop", (e) => {
     e.preventDefault();
-    dropZone.classList.remove('dragover');
+    dropZone.classList.remove("dragover");
     fileInput.files = e.dataTransfer.files;
     displayFiles();
-});
+  });
 
-fileInput.addEventListener('change', displayFiles);
+  fileInput.addEventListener("change", displayFiles);
 
-function displayFiles() {
-    fileList.innerHTML = '';
+  function displayFiles() {
+    fileList.innerHTML = "";
     const files = fileInput.files;
     if (files.length > 0) {
-        Array.from(files).forEach((file, index) => {
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
+      Array.from(files).forEach((file, index) => {
+        const div = document.createElement("div");
+        div.className = "file-item";
+        div.innerHTML = `
                 <span>📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                 <button type="button" onclick="removeFile(${index})">Remove</button>
             `;
-            fileList.appendChild(div);
-        });
+        fileList.appendChild(div);
+      });
     }
-}
+  }
 
-function removeFile(index) {
+  function removeFile(index) {
     const dt = new DataTransfer();
     const files = fileInput.files;
     for (let i = 0; i < files.length; i++) {
-        if (i !== index) dt.items.add(files[i]);
+      if (i !== index) dt.items.add(files[i]);
     }
     fileInput.files = dt.files;
     displayFiles();
-}
+  }
 </script>
 {% endblock %}
